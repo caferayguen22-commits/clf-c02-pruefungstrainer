@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CLF-C02 Prüfungstrainer</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1c2230;--mute:#667085;--line:#dfe3ea;--accent:#2f6fed;--ok:#1b8a4b;--okbg:#e6f6ec;--bad:#c4302b;--badbg:#fdeceb;--warn:#b26a00;--warnbg:#fff4e0}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#12151c;--card:#1b2030;--ink:#e8ebf2;--mute:#9aa4b8;--line:#2c3447;--accent:#6b9bff;--ok:#4cc887;--okbg:#14301f;--bad:#ff7a73;--badbg:#3a1a19;--warn:#f0b04a;--warnbg:#3a2c10}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:820px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:8px 0 2px}h2{font-size:18px;margin:0 0 8px}
+.sub{color:var(--mute);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:10px 14px;border-radius:10px}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.mode{text-align:left;width:100%;display:block}
+button.mode b{display:block}button.mode span{color:var(--mute);font-size:14px}
+button:disabled{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sp{flex:1}
+.pill{font-size:13px;padding:2px 10px;border-radius:999px;border:1px solid var(--line);color:var(--mute)}
+.seg button{border-radius:0;padding:6px 12px}
+.seg button:first-child{border-radius:10px 0 0 10px}.seg button:last-child{border-radius:0 10px 10px 0}
+.seg button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.q{font-size:18px;font-weight:600;margin:8px 0 12px}
+.q .en{display:block;font-weight:500;color:var(--mute);font-size:16px;margin-top:6px}
+.opt{display:flex;gap:10px;width:100%;text-align:left;margin-bottom:8px;align-items:flex-start}
+.opt .k{font-weight:700;min-width:22px}
+.opt .en{display:block;color:var(--mute);font-size:14px}
+.opt.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.opt.ok{background:var(--okbg);border-color:var(--ok)}
+.opt.bad{background:var(--badbg);border-color:var(--bad)}
+.opt.miss{background:var(--okbg);border-color:var(--ok);border-style:dashed}
+.opt .tag{margin-left:auto;padding-left:8px;font-size:12px;font-weight:700;color:var(--ok);white-space:nowrap}
+.expl{background:var(--warnbg);border-left:4px solid var(--warn);padding:10px 12px;border-radius:8px;margin-top:10px}
+.expl .en{display:block;color:var(--mute);margin-top:4px}
+.bar{height:8px;background:var(--line);border-radius:6px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--accent)}
+.big{font-size:40px;font-weight:700;line-height:1.1}
+.pass{color:var(--ok)}.fail{color:var(--bad)}
+table{width:100%;border-collapse:collapse;font-size:15px}td,th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left}
+.nav{display:flex;flex-wrap:wrap;gap:6px}
+.nav button{padding:4px 0;width:36px;text-align:center;font-size:13px}
+.nav button.done{background:var(--okbg)}.nav button.cur{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}.nav button.flag{border-color:var(--warn)}
+.hint{color:var(--mute);font-size:14px}
+.timer{font-variant-numeric:tabular-nums;font-weight:700}
+.timer.low{color:var(--bad)}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div class="wrap"><p style="color:var(--mute);font-size:13px;margin:0 0 24px">Inoffizielles Lernmaterial / Unofficial study material. Selbst geschriebene Übungsfragen, keine echten AWS-Prüfungsfragen, ohne Gewähr. Not affiliated with or endorsed by AWS. Dein Fortschritt wird nur in deinem Browser gespeichert.</p></div>
+<script src="fragen.js"></script>
+<script>
+const DOM = {C:["Cloud-Konzepte","Cloud Concepts",24],S:["Sicherheit & Compliance","Security & Compliance",30],T:["Technologie & Services","Cloud Technology & Services",34],B:["Abrechnung & Support","Billing, Pricing & Support",12]};
+const $ = s => document.querySelector(s);
+const app = $("#app");
+const LS = {
+  get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+let lang = LS.get("lang","both");          // de | en | both
+let stats = LS.get("stats",{});             // {id:{r:richtig,w:falsch}}
+let history = LS.get("history",[]);         // Prüfungsversuche
+let S = null;                               // laufende Sitzung
+let timerId = null;
+
+const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]} return a; };
+const pair = x => Array.isArray(x) ? x : [x,x];
+const esc = s => String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+function txt(p){ // zweisprachiger Text je nach Einstellung
+  const [de,en] = pair(p);
+  if (lang==="de") return esc(de);
+  if (lang==="en") return esc(en);
+  return esc(de) + (de!==en ? `<span class="en">${esc(en)}</span>` : "");
+}
+const fmt = s => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+
+function langBar(){
+  return `<div class="seg row" role="group" aria-label="Sprache">${[["de","Deutsch"],["en","English"],["both","DE + EN"]].map(([k,l])=>`<button class="${lang===k?"on":""}" onclick="setLang('${k}')">${l}</button>`).join("")}</div>`;
+}
+function setLang(l){ lang=l; LS.set("lang",l); S ? renderQ() : home(); }
+
+// ---------- Startseite ----------
+function home(){
+  clearInterval(timerId);
+  S = null;
+  const total = FRAGEN.length;
+  const seen = Object.keys(stats).length;
+  const wrongIds = Object.entries(stats).filter(([id,s])=>s.w>0 && s.w>=s.r).map(([id])=>+id);
+  const last = history.slice(-5).reverse();
+  app.innerHTML = `
+  <h1>CLF-C02 Prüfungstrainer</h1>
+  <p class="sub">AWS Certified Cloud Practitioner · ${total} Fragen · Deutsch + Englisch</p>
+  <div class="card row"><b>Sprache:</b> ${langBar()}<span class="hint">Für die echte Prüfung: auf „English“ stellen.</span></div>
+  <div class="grid">
+    <div class="card"><button class="mode primary" onclick="startExam()"><b>Prüfungssimulation</b><span style="color:#dbe6ff">65 Fragen · 90 Min · Ergebnis erst am Ende · bestanden ab 700/1000</span></button></div>
+    <div class="card"><button class="mode" onclick="startPractice('all')"><b>Üben (alle Fragen)</b><span>Sofort Feedback + Erklärung, gemischte Reihenfolge</span></button></div>
+    <div class="card"><button class="mode" onclick="startPractice('wrong')" ${wrongIds.length?"":"disabled"}><b>Nur meine Fehler (${wrongIds.length})</b><span>Fragen, die du öfter falsch als richtig hattest</span></button></div>
+    <div class="card"><button class="mode" onclick="startPractice('new')" ${seen<total?"":"disabled"}><b>Noch nicht gesehen (${total-seen})</b><span>Nur Fragen, die du noch nie beantwortet hast</span></button></div>
+  </div>
+  <div class="card"><h2>Üben nach Bereich</h2><div class="row">${Object.entries(DOM).map(([k,v])=>`<button onclick="startPractice('${k}')">${v[0]} (${FRAGEN.filter(q=>q.d===k).length})</button>`).join("")}</div></div>
+  <div class="card"><h2>Letzte Prüfungen</h2>${last.length?`<table><tr><th>Datum</th><th>Richtig</th><th>Punkte*</th><th>Ergebnis</th></tr>${last.map(h=>`<tr><td>${h.date}</td><td>${h.correct}/${h.total}</td><td>${h.score}</td><td class="${h.score>=700?"pass":"fail"}">${h.score>=700?"bestanden":"nicht bestanden"}</td></tr>`).join("")}</table>`:`<p class="hint">Noch keine Prüfung gemacht.</p>`}
+    <p class="hint">*Näherung. Die echte Skala (100–1000) wird anders berechnet. Das hier zeigt nur die Richtung.</p>
+    <div class="row"><button onclick="resetStats()">Statistik zurücksetzen</button></div></div>
+  <p class="hint">Alles ist selbst geschrieben und keine echte Prüfungsfrage. Neue Fragen: unten in <code>fragen.js</code> anhängen. Die Antwort-Reihenfolge wird bei jeder Frage gemischt, damit du dich nicht auf „immer B“ verlässt.</p>`;
+}
+function resetStats(){ if(confirm("Statistik und Verlauf wirklich löschen?")){stats={};history=[];LS.set("stats",stats);LS.set("history",history);home();} }
+
+// ---------- Sitzung ----------
+function build(ids, mode, secs){
+  S = { mode, secs, left:secs, i:0, items: ids.map(id=>{
+    const q = FRAGEN[id]; const order = shuffle(q.o.map((_,k)=>k));
+    return { id, order, sel:[], done:false, flag:false };
+  })};
+  renderQ();
+  if (secs){ clearInterval(timerId); timerId=setInterval(()=>{ S.left--; const t=$("#t"); if(t){t.textContent=fmt(S.left);t.classList.toggle("low",S.left<300)} if(S.left<=0) finish(); },1000); }
+}
+function startExam(){
+  const want = {C:16,S:19,T:22,B:8}; let ids=[];
+  for (const d in want){ ids = ids.concat(shuffle(FRAGEN.map((q,i)=>q.d===d?i:-1).filter(i=>i>=0)).slice(0,want[d])); }
+  const rest = shuffle(FRAGEN.map((_,i)=>i).filter(i=>!ids.includes(i)));
+  while (ids.length<65 && rest.length) ids.push(rest.pop());
+  build(shuffle(ids),"exam",Math.round(90*60*ids.length/65));
+}
+function startPractice(kind){
+  let ids = FRAGEN.map((_,i)=>i);
+  if (kind==="wrong") ids = ids.filter(i=>stats[i] && stats[i].w>0 && stats[i].w>=stats[i].r);
+  else if (kind==="new") ids = ids.filter(i=>!stats[i]);
+  else if (DOM[kind]) ids = ids.filter(i=>FRAGEN[i].d===kind);
+  if (!ids.length) return;
+  build(shuffle(ids),"practice",0);
+}
+
+function isCorrect(it){ const q=FRAGEN[it.id]; return it.sel.length===q.a.length && q.a.every(a=>it.sel.includes(a)); }
+
+function renderQ(){
+  const it = S.items[S.i], q = FRAGEN[it.id], exam = S.mode==="exam", multi = q.a.length>1;
+  const answered = exam ? false : it.done;
+  const opts = it.order.map((k,pos)=>{
+    const sel = it.sel.includes(k), right = q.a.includes(k);
+    let cls = "opt"; if (!answered && sel) cls+=" sel";
+    if (answered){ if (right&&sel) cls+=" ok"; else if (sel&&!right) cls+=" bad"; else if (right) cls+=" miss"; }
+    return `<button class="${cls}" ${answered?"disabled":""} onclick="pick(${k})"><span class="k">${"ABCDEF"[pos]}</span><span>${txt(q.o[k])}</span>${(answered&&right)?'<span class="tag">✓ richtig / correct</span>':""}</button>`;
+  }).join("");
+  const nav = S.items.map((x,n)=>`<button class="${n===S.i?"cur ":""}${x.sel.length&&(exam||x.done)?"done ":""}${x.flag?"flag":""}" onclick="go(${n})">${n+1}</button>`).join("");
+  const exp = answered ? `<div class="expl"><b>${isCorrect(it)?"Richtig ✓":"Nicht ganz ✗"}</b><br>${txt(q.e)}</div>` : "";
+  const nOk = S.items.filter(x=>x.done&&isCorrect(x)).length, nDone = S.items.filter(x=>x.done).length;
+  app.innerHTML = `
+  <div class="row"><b>${exam?"Prüfung":"Üben"}</b><span class="pill">Frage ${S.i+1} / ${S.items.length}</span><span class="pill">${DOM[q.d][1]}</span>
+    <span class="sp"></span>${exam?`<span class="timer ${S.left<300?"low":""}" id="t">${fmt(S.left)}</span>`:`<span class="pill">${nOk}/${nDone} richtig</span>`}</div>
+  <div class="bar" style="margin:8px 0"><i style="width:${(S.i+1)/S.items.length*100}%"></i></div>
+  <div class="card">
+    <div class="row">${langBar()}<span class="sp"></span><button onclick="flagIt()">${it.flag?"🚩 Markiert":"⚑ Markieren"}</button></div>
+    <div class="q">${multi?`<span class="pill">Wähle ${q.a.length} / Choose ${q.a.length}</span><br>`:""}${txt(q.q)}</div>
+    ${opts}${exp}
+    <div class="row" style="margin-top:10px">
+      <button onclick="go(${S.i-1})" ${S.i===0?"disabled":""}>← Zurück</button>
+      ${!exam && !it.done ? `<button class="primary" onclick="check()" ${it.sel.length?"":"disabled"}>Prüfen</button>`:""}
+      ${S.i<S.items.length-1 ? `<button ${(!exam&&!it.done)?"":"class=\"primary\""} onclick="go(${S.i+1})">Weiter →</button>` : `<button class="primary" onclick="finish(true)">${exam?"Abgeben":"Beenden"}</button>`}
+      <span class="sp"></span><button onclick="quit()">Abbrechen</button>
+    </div>
+  </div>
+  <div class="card"><div class="nav">${nav}</div></div>`;
+}
+function pick(k){
+  const it=S.items[S.i], q=FRAGEN[it.id];
+  if (S.mode!=="exam" && it.done) return;
+  if (q.a.length>1){ const p=it.sel.indexOf(k); p>=0?it.sel.splice(p,1):(it.sel.length<q.a.length&&it.sel.push(k)); }
+  else it.sel=[k];
+  renderQ();
+}
+function check(){ const it=S.items[S.i]; if(!it.sel.length) return; it.done=true; record(it); renderQ(); }
+function record(it){ const s=stats[it.id]||(stats[it.id]={r:0,w:0}); isCorrect(it)?s.r++:s.w++; LS.set("stats",stats); }
+function go(n){ if(n<0||n>=S.items.length) return; S.i=n; renderQ(); window.scrollTo(0,0); }
+function flagIt(){ S.items[S.i].flag=!S.items[S.i].flag; renderQ(); }
+function quit(){ if(confirm("Sitzung abbrechen? Die Antworten der Prüfung gehen verloren.")) home(); }
+
+// ---------- Ergebnis ----------
+function finish(manual){
+  const exam = S.mode==="exam";
+  const open = S.items.filter(x=>!x.sel.length).length;
+  if (manual && exam && open && !confirm(`${open} Frage(n) sind noch offen. Trotzdem abgeben?`)) return;
+  clearInterval(timerId);
+  if (exam) S.items.forEach(it=>{ it.done=true; record(it); });
+  const total=S.items.length, correct=S.items.filter(isCorrect).length;
+  const score = Math.round(100 + 900*correct/total);
+  if (exam){ history.push({date:new Date().toLocaleDateString("de-DE"),correct,total,score}); LS.set("history",history); }
+  window.__last = S;
+  showResult();
+}
+function showResult(){
+  const exam = S.mode==="exam";
+  const total=S.items.length, correct=S.items.filter(isCorrect).length;
+  const score = Math.round(100 + 900*correct/total);
+  const byD={}; S.items.forEach(it=>{const d=FRAGEN[it.id].d;(byD[d]=byD[d]||{c:0,t:0});byD[d].t++;if(isCorrect(it))byD[d].c++;});
+  const wrong = S.items.filter(it=>!isCorrect(it));
+  app.innerHTML = `
+  <h1>Ergebnis</h1>
+  <div class="card"><div class="big ${score>=700?"pass":"fail"}">${exam?score+" / 1000":correct+" / "+total}</div>
+    <p>${correct} von ${total} richtig (${Math.round(correct/total*100)} %)${exam?` · ${score>=700?"<b class=pass>bestanden</b>":"<b class=fail>nicht bestanden</b>"} (Näherung, bestanden ab 700)`:""}</p>
+    <table><tr><th>Bereich</th><th>Richtig</th><th>%</th></tr>${Object.entries(byD).map(([d,v])=>`<tr><td>${DOM[d][0]}</td><td>${v.c}/${v.t}</td><td>${Math.round(v.c/v.t*100)} %</td></tr>`).join("")}</table>
+    <div class="row" style="margin-top:12px"><button class="primary" onclick="home()">Zur Startseite</button><button onclick="startExam()">Neue Prüfung</button></div></div>
+  <div class="card row"><b>Sprache:</b>${langBar().replace(/setLang\('(\w+)'\)/g,"setLang2('$1')")}</div>
+  <h2>${wrong.length?`Falsch beantwortet (${wrong.length})`:"Alles richtig. Stark! 🎉"}</h2>
+  ${wrong.map(it=>reviewCard(it)).join("")}`;
+  window.scrollTo(0,0);
+}
+function setLang2(l){ lang=l; LS.set("lang",l); S=window.__last; showResult(); }
+function reviewCard(it){
+  const q=FRAGEN[it.id];
+  const o = it.order.map((k,pos)=>{ const sel=it.sel.includes(k), right=q.a.includes(k);
+    const cls = right&&sel?"opt ok":sel?"opt bad":right?"opt miss":"opt";
+    return `<div class="${cls}" style="cursor:default"><span class="k">${"ABCDEF"[pos]}</span><span>${txt(q.o[k])}</span>${right?'<span class="tag">✓ richtig / correct</span>':""}</div>`; }).join("");
+  return `<div class="card"><div class="q">${txt(q.q)}</div>${o}${it.sel.length?"":`<p class="hint">Nicht beantwortet.</p>`}<div class="expl">${txt(q.e)}</div></div>`;
+}
+home();
+</script>
+</body>
+</html>
