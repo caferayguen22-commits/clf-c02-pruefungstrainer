@@ -290,7 +290,7 @@ Q("B","Kosten-Tools",["Welches Werkzeug liefert die detailliertesten Abrechnungs
 Q("B","EC2-Preismodelle",["Ein Unternehmen braucht einen physischen Server nur für sich, z. B. wegen bestehender Softwarelizenzen. Was passt?","A company needs a physical server just for itself, e.g. because of existing software licenses. What fits?"],
  ["Dedicated Hosts","Spot Instances","Lambda","Amazon Lightsail"],[0],
  ["Dedicated Hosts = ganzer physischer Server, hilfreich bei Lizenzbindung.","Dedicated Hosts = a whole physical server, helpful for license-bound software."]),
-// ---- S3-Vertiefung ----
+// ---- S3-Vertiefung S3-Vertiefung ----
 Q("S","S3",["Ein privater Bucket: Der „Open“-Button in der Konsole klappt, die Objekt-URL im Browser gibt AccessDenied. Warum?","A private bucket: the console Open button works, but the object URL in a browser returns AccessDenied. Why?"],
  [["Die Konsole nutzt eine vorsignierte URL mit den Zugangsdaten des Benutzers.","The console uses a pre-signed URL carrying the user's credentials."],["Die URL funktioniert nur bei aktivem Versioning.","The URL only works when versioning is enabled."],["Die URL funktioniert nur innerhalb der Region.","The URL only works inside the Region."],["Das Objekt wird noch repliziert.","The object is still being replicated."]],[0],
  ["Vorsignierte URL = zeitlich begrenzter Zugriff, ohne den Bucket öffentlich zu machen.","A pre-signed URL gives time-limited access without making the bucket public."]),
@@ -486,5 +486,18 @@ Q("S","KMS Löschung",["Was passiert während der Wartezeit vor dem endgültigen
  ["Wartezeit 7 bis 30 Tage. Ein sofortiges Löschen gibt es nicht. Deaktivieren ist dagegen rückgängig zu machen.","Waiting period of 7 to 30 days. Immediate deletion is not possible. Disabling, by contrast, can be reversed."]),
 Q("B","KMS Kosten",["Was kostet ein Customer Managed KMS-Key (symmetrisch), grob gesagt?","Roughly what does a customer managed KMS key (symmetric) cost?"],
  [["Etwa 1 $ pro Monat (anteilig pro Stunde), plus Anfragen","About $1 per month (prorated hourly), plus requests"],["Nichts, er ist immer kostenlos","Nothing, it is always free"],["100 $ pro Monat","$100 per month"],["Nur beim Löschen","Only when deleting"]],[0],
- ["Ein Key in der Wartezeit der Löschung wird nicht berechnet. AWS Managed Keys kosten keine monatliche Gebühr pro Key.","A key in the deletion waiting period is not charged. AWS managed keys have no monthly per-key fee."])
+ ["Ein Key in der Wartezeit der Löschung wird nicht berechnet. AWS Managed Keys kosten keine monatliche Gebühr pro Key.","A key in the deletion waiting period is not charged. AWS managed keys have no monthly per-key fee."]),
+// ---- Parameter Store vs Secrets Manager (19.11.2026) ----
+Q("S","Parameter Store vs Secrets Manager",["Ein Unternehmen muss die Passwörter seiner Amazon-RDS-Datenbanken automatisch rotieren. Welchen Service sollte es wählen?","A company must automatically rotate the passwords of its Amazon RDS databases. Which service should it choose?"],
+ [["AWS Secrets Manager","AWS Secrets Manager"],["Systems Manager Parameter Store","Systems Manager Parameter Store"],["Amazon S3","Amazon S3"],["AWS KMS","AWS KMS"]],[0],
+ ["Stichwort 'automatische Rotation' (vor allem RDS) = Secrets Manager. Parameter Store hat keine integrierte Rotation. KMS verwaltet nur Schlüssel.","Keyword 'automatic rotation' (especially RDS) = Secrets Manager. Parameter Store has no built-in rotation. KMS only manages keys."]),
+Q("S","Parameter Store vs Secrets Manager",["Eine Anwendung braucht Konfigurationswerte für Entwicklung und Produktion in hierarchischen Pfaden (z. B. /app/prod/db). Welcher Service passt am besten?","An application needs configuration values for development and production in hierarchical paths (e.g. /app/prod/db). Which service fits best?"],
+ [["Systems Manager Parameter Store","Systems Manager Parameter Store"],["AWS Secrets Manager","AWS Secrets Manager"],["Amazon CloudWatch","Amazon CloudWatch"],["AWS Config","AWS Config"]],[0],
+ ["Hierarchische Namen sind ein Merkmal von Parameter Store. Secrets Manager hat flache Namen, ein / ist nur eine Konvention.","Hierarchical names are a feature of Parameter Store. Secrets Manager has flat names; a / is only a convention."]),
+Q("B","Parameter Store vs Secrets Manager",["Welcher Service speichert Standard-Parameter ohne zusätzliche Speicherkosten?","Which service stores standard parameters at no additional storage cost?"],
+ [["Systems Manager Parameter Store (Standard-Stufe)","Systems Manager Parameter Store (standard tier)"],["AWS Secrets Manager","AWS Secrets Manager"],["Beide Services","Both services"],["Keiner von beiden","Neither"]],[0],
+ ["Parameter Store Standard: kostenlos (bis 4 KB). Advanced-Stufe kostenpflichtig (bis 8 KB). Secrets Manager kostet pro Secret und pro API-Aufruf.","Parameter Store standard: free (up to 4 KB). Advanced tier is paid (up to 8 KB). Secrets Manager costs per secret and per API call."]),
+Q("S","Parameter Store vs Secrets Manager",["Kann Parameter Store Passwörter sicher speichern?","Can Parameter Store store passwords securely?"],
+ [["Ja, als SecureString mit KMS-Verschlüsselung","Yes, as a SecureString with KMS encryption"],["Nein, nur nicht vertrauliche Werte","No, only non-sensitive values"],["Nur wenn es mit Secrets Manager verbunden ist","Only if connected to Secrets Manager"],["Nur in der Advanced-Stufe ohne KMS","Only in the advanced tier without KMS"]],[0],
+ ["Sicher gespeichert ja. Aber ohne automatische Rotation: muss ein Passwort regelmäßig (z. B. alle 30 Tage) wechseln, ist Secrets Manager besser.","Stored securely, yes. But without automatic rotation: if a password must change regularly (e.g. every 30 days), Secrets Manager is the better fit."])
 ];
