@@ -544,4 +544,9 @@ Q("S","Security Hub",["Welcher Dienst führt Sicherheitsergebnisse von GuardDuty
 Q("S","IAM-Policy-Elemente",["Welches Pflichtelement eines IAM-Policy-Statements legt fest, ob die Anweisung die Aktion erlaubt oder blockiert?","Which required element of an IAM policy statement specifies whether it allows or blocks the action?"],
  [["Effect (Allow oder Deny)","Effect (Allow or Deny)"],["Action","Action"],["Resource","Resource"],["Principal","Principal"]],[0],
  ["Effect = erlauben oder verbieten. Action = welche Aktion, Resource = worauf, Principal = wer (nur in ressourcenbasierten Policies).","Effect = allow or deny. Action = which action, Resource = on what, Principal = who (resource-based policies only)."])
+,
+// ---- Hochverfügbarkeit: RPO und RTO (24.11.2026) ----
+Q("T","RPO und RTO",["Ein Unternehmen darf bei einem Ausfall höchstens 15 Minuten an Daten verlieren. Welche Kennzahl beschreibt das?","A company may lose at most 15 minutes of data in an outage. Which metric describes this?"],
+ [["RPO (Recovery Point Objective)","RPO (Recovery Point Objective)"],["RTO (Recovery Time Objective)","RTO (Recovery Time Objective)"],["SLA (Service Level Agreement)","SLA (Service Level Agreement)"],["MTU (Maximum Transmission Unit)","MTU (Maximum Transmission Unit)"]],[0],
+ ["RPO = wie viel Datenverlust (als Zeit) erlaubt ist, Blick zurück zum letzten Backup. RTO = wie lange der Ausfall dauern darf, bis alles wieder läuft. Tägliche Backups heißen bis zu 24 Stunden RPO, Point-in-Time-Recovery nur Minuten.","RPO = how much data loss (as time) is allowed, looking back to the last backup. RTO = how long the outage may last until everything runs again. Daily backups mean up to 24 hours of RPO, point-in-time recovery only minutes."])
 ];
